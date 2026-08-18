@@ -7,6 +7,11 @@ on:
       - agent/ccswitch-3.19.2-wslfix-build
     paths:
       - .github/workflows/build-ccswitch-3.19.2-wslfix.yml
+  pull_request:
+    branches:
+      - master
+    paths:
+      - .github/workflows/build-ccswitch-3.19.2-wslfix.yml
 
 jobs:
   build-windows:

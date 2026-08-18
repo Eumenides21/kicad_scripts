@@ -1,0 +1,63 @@
+name: Build CC Switch 3.19.2 + WSL Fix
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - agent/ccswitch-3.19.2-wslfix-build
+    paths:
+      - .github/workflows/build-ccswitch-3.19.2-wslfix.yml
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout helper repo
+        uses: actions/checkout@v4
+
+      - name: Clone CC Switch
+        shell: pwsh
+        run: |
+          git clone https://github.com/farion1231/cc-switch.git ccswitch
+          Set-Location ccswitch
+          git fetch --tags origin
+          git checkout v3.19.2
+          git cherry-pick c39c903
+          git log -3 --oneline
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.12.3
+          run_install: false
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install dependencies
+        shell: pwsh
+        working-directory: ccswitch
+        run: pnpm install --frozen-lockfile
+
+      - name: Build portable exe
+        shell: pwsh
+        working-directory: ccswitch
+        run: pnpm tauri build --no-bundle
+
+      - name: Verify executable
+        shell: pwsh
+        run: |
+          Get-ChildItem ccswitch/src-tauri/target/release/*.exe
+
+      - name: Upload portable exe
+        uses: actions/upload-artifact@v4
+        with:
+          name: CC-Switch-v3.19.2-plus-6232-Windows-portable
+          path: ccswitch/src-tauri/target/release/cc-switch.exe
+          if-no-files-found: error
+          retention-days: 14
